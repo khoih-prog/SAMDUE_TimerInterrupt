@@ -1,0 +1,74 @@
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+DueTimerInterrupt	KEYWORD1
+DueTimerIRQInfo KEYWORD1
+DueTimerIRQInfoStr  KEYWORD1
+timerCallback  KEYWORD1
+
+SAMDUE_ISRTimer KEYWORD1
+SAMDUE_ISR_Timer KEYWORD1
+SAMDUETimerNumber KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+##############################
+# Class DueTimerInterrupt
+##############################
+
+getAvailable
+
+attachInterruptInterval	KEYWORD2
+attachInterrupt	KEYWORD2
+detachInterrupt	KEYWORD2
+startTimer	KEYWORD2
+restartTimer	KEYWORD2
+stopTimer	KEYWORD2
+disableTimer	KEYWORD2
+bestClock KEYWORD2
+setFrequency	KEYWORD2
+setPeriod KEYWORD2
+setInterval	KEYWORD2
+getPeriod KEYWORD2
+getTimerNumber
+
+##############################
+# Class SAMDUE_ISR_Timer
+##############################
+
+run KEYWORD2
+setTimeout  KEYWORD2
+setTimer  KEYWORD2
+changeInterval  KEYWORD2
+deleteTimer KEYWORD2
+restartTimer  KEYWORD2
+isEnabled KEYWORD2
+enable  KEYWORD2
+disable KEYWORD2
+enableAll KEYWORD2
+disableAll  KEYWORD2
+toggle  KEYWORD2
+getNumTimers  KEYWORD2
+getNumAvailableTimers KEYWORD2
+
+##############################
+# IRQ Handlers
+##############################
+
+TC0_Handler KEYWORD2
+TC1_Handler KEYWORD2
+TC2_Handler KEYWORD2
+TC3_Handler KEYWORD2
+TC4_Handler KEYWORD2
+TC5_Handler KEYWORD2
+TC6_Handler KEYWORD2
+TC7_Handler KEYWORD2
+TC8_Handler KEYWORD2
+
+
+#######################################
+# Constants (LITERAL1)
+#######################################
