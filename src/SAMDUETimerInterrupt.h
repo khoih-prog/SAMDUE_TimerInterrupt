@@ -19,11 +19,12 @@
    Based on BlynkTimer.h
    Author: Volodymyr Shymanskyy
 
-   Version: 1.0.1
+   Version: 1.1.1
 
    Version Modified By   Date      Comments
    ------- -----------  ---------- -----------
    1.0.1   K Hoang      06/11/2020 Initial coding
+   1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
 *****************************************************************************************************************************/
 
 #pragma once
@@ -35,7 +36,7 @@
 #include "Arduino.h"
 #include <inttypes.h>
 
-#define SAMDUE_TIMER_INTERRUPT_VERSION      "1.0.1"
+#define SAMDUE_TIMER_INTERRUPT_VERSION      "SAMDUETimerInterrupt v1.1.1"
 
 #ifndef SAMDUE_TIMER_INTERRUPT_DEBUG
   #define SAMDUE_TIMER_INTERRUPT_DEBUG       0

@@ -1,5 +1,5 @@
 /****************************************************************************************************************************
-   RPM_Measure.ino
+   Change_Interval.ino
    For SAM DUE boards
    Written by Khoi Hoang
 
@@ -26,6 +26,7 @@
    1.0.1   K Hoang      06/11/2020 Initial coding
    1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
 *****************************************************************************************************************************/
+
 /*
    Notes:
    Special design is necessary to share data between interrupt code and the rest of your program.
@@ -36,24 +37,6 @@
    if the interrupt changes a multi-byte variable between a sequence of instructions, it can be read incorrectly.
    If your data is multiple variables, such as an array and a count, usually interrupts need to be disabled
    or the entire sequence of your code which accesses the data.
-
-   RPM Measuring uses high frequency hardware timer 1Hz == 1ms) to measure the time from of one rotation, in ms
-   then convert to RPM. One rotation is detected by reading the state of a magnetic REED SW or IR LED Sensor
-   Asssuming LOW is active.
-   For example: Max speed is 600RPM => 10 RPS => minimum 100ms a rotation. We'll use 80ms for debouncing
-   If the time between active state is less than 8ms => consider noise.
-   RPM = 60000 / (rotation time in ms)
-
-   We use interrupt to detect whenever the SW is active, set a flag then use timer to count the time between active state
-
-   RPM Measuring uses high frequency hardware timer 1Hz == 1ms) to measure the time from of one rotation, in ms
-   then convert to RPM. One rotation is detected by reading the state of a magnetic REED SW or IR LED Sensor
-   Asssuming LOW is active.
-   For example: Max speed is 600RPM => 10 RPS => minimum 100ms a rotation. We'll use 80ms for debouncing
-   If the time between active state is less than 8ms => consider noise.
-   RPM = 60000 / (rotation time in ms)
-
-   You can also use interrupt to detect whenever the SW is active, set a flag then use timer to count the time between active state
 */
 
 #if !( defined(ARDUINO_SAM_DUE) || defined(__SAM3X8E__) )
@@ -78,58 +61,43 @@
   #define LED_RED           8
 #endif
 
-unsigned int SWPin = 7;
+#define TIMER0_INTERVAL_MS        500   //1000
+#define TIMER1_INTERVAL_MS        1000
 
-#define TIMER0_INTERVAL_MS        1
-#define DEBOUNCING_INTERVAL_MS    80
+volatile uint32_t Timer0Count = 0;
+volatile uint32_t Timer1Count = 0;
 
-#define LOCAL_DEBUG               1
-
-volatile unsigned long rotationTime = 0;
-float RPM       = 0.00;
-float avgRPM    = 0.00;
-
-volatile int debounceCounter;
-
-void TimerHandler()
+void printResult(uint32_t currTime)
 {
-  static bool started = false;
-
-  if (!started)
-  {
-    started = true;
-    pinMode(SWPin, INPUT_PULLUP);
-  }
-
-  if ( !digitalRead(SWPin) && (debounceCounter >= DEBOUNCING_INTERVAL_MS / TIMER0_INTERVAL_MS ) )
-  {
-    //min time between pulses has passed
-    RPM = (float) ( 60000.0f / ( rotationTime * TIMER0_INTERVAL_MS ) );
-
-    avgRPM = ( 2 * avgRPM + RPM) / 3,
-
-    Serial.println("RPM = " + String(avgRPM) + ", rotationTime ms = " + String(rotationTime * TIMER0_INTERVAL_MS) );
-
-    rotationTime = 0;
-    debounceCounter = 0;
-  }
-  else
-  {
-    debounceCounter++;
-  }
-
-  if (rotationTime >= 5000)
-  {
-    // If idle, set RPM to 0, don't increase rotationTime
-    RPM = 0;
-    Serial.println("RPM = " + String(RPM) + ", rotationTime = " + String(rotationTime) );
-    rotationTime = 0;
-  }
-  else
-  {
-    rotationTime++;
-  }
+  Serial.println("Time = " + String(currTime) + ", Timer0Count = " + String(Timer0Count) + ", Timer1Count = " + String(Timer1Count));
 }
+
+void TimerHandler0(void)
+{
+  static bool toggle0 = false;
+
+  // Flag for checking to be sure ISR is working as SErial.print is not OK here in ISR
+  Timer0Count++;
+
+  //timer interrupt toggles pin LED_BUILTIN
+  digitalWrite(LED_BUILTIN, toggle0);
+  toggle0 = !toggle0;
+}
+
+void TimerHandler1(void)
+{
+  static bool toggle1 = false;
+
+  // Flag for checking to be sure ISR is working as Serial.print is not OK here in ISR
+  Timer1Count++;
+  
+  //timer interrupt toggles outputPin
+  digitalWrite(LED_BLUE, toggle1);
+  toggle1 = !toggle1;
+}
+
+uint16_t timerNumber0;
+uint16_t timerNumber1;
 
 uint16_t attachDueInterrupt(double microseconds, timerCallback callback, const char* TimerName)
 {
@@ -147,23 +115,71 @@ uint16_t attachDueInterrupt(double microseconds, timerCallback callback, const c
   return timerNumber;
 }
 
-void setup()
+uint16_t updateTimerInterval(uint16_t timerNumberInput, double microseconds, timerCallback callback, const char* TimerName)
 { 
+  DueTimerInterrupt dueTimerInterrupt(timerNumberInput);
+  
+  dueTimerInterrupt.attachInterruptInterval(microseconds, callback);
+
+  uint16_t timerNumber = dueTimerInterrupt.getTimerNumber();
+  
+  Serial.print(TimerName);
+  Serial.print(" attached to Timer(");
+  Serial.print(timerNumber);
+  Serial.println(")");
+
+  return timerNumber;
+}
+
+void setup()
+{
+  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(LED_BLUE,    OUTPUT);
+  
   Serial.begin(115200);
   while (!Serial);
-  
-  Serial.println("\nStarting RPM_Measure on " + String(BOARD_NAME));
+
+  delay(100);
+
+  Serial.println("\nStarting Change_Interval on " + String(BOARD_NAME));
   Serial.println(SAMDUE_TIMER_INTERRUPT_VERSION);
   Serial.println("CPU Frequency = " + String(F_CPU / 1000000) + " MHz");
   Serial.println("Timer Frequency = " + String(SystemCoreClock / 1000000) + " MHz");
 
   // Interval in microsecs
-  attachDueInterrupt(TIMER0_INTERVAL_MS * 1000, TimerHandler, "ITimer");
-
-  Serial.flush();
+  timerNumber0 = attachDueInterrupt(TIMER0_INTERVAL_MS * 1000, TimerHandler0, "ITimer0");
+  timerNumber1 = attachDueInterrupt(TIMER1_INTERVAL_MS * 1000, TimerHandler1, "ITimer1");
 }
+
+#define CHECK_INTERVAL_MS     10000L
+#define CHANGE_INTERVAL_MS    20000L
 
 void loop()
 {
+  static uint32_t lastTime = 0;
+  static uint32_t lastChangeTime = 0;
+  static uint32_t currTime;
+  static uint32_t multFactor = 0;
 
+  currTime = millis();
+
+  if (currTime - lastTime > CHECK_INTERVAL_MS)
+  {
+    printResult(currTime);
+    lastTime = currTime;
+
+    if (currTime - lastChangeTime > CHANGE_INTERVAL_MS)
+    {
+      //setInterval(unsigned long interval, timerCallback callback)
+      multFactor = (multFactor + 1) % 2;
+
+      updateTimerInterval(timerNumber0, TIMER0_INTERVAL_MS * 1000 * (multFactor + 1), TimerHandler0, "ITimer0");
+      updateTimerInterval(timerNumber1, TIMER1_INTERVAL_MS * 1000 * (multFactor + 1), TimerHandler1, "ITimer1");
+      
+      Serial.println("Changing Interval, Timer0 = " + String(TIMER0_INTERVAL_MS * (multFactor + 1)) + 
+                                     ",  Timer1 = "  + String(TIMER1_INTERVAL_MS * (multFactor + 1)));
+      
+      lastChangeTime = currTime;
+    }
+  }
 }

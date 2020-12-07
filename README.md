@@ -44,6 +44,11 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 ---
 ---
 
+### Releases v1.1.1
+
+1. Add example [**Change_Interval**](examples/Change_Interval) and [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex)
+2. Bump up version to sync with other TimerInterrupt Libraries. Modify Version String.
+
 ### Releases v1.0.1
 
 1. Permit up to 16 super-long-time, super-accurate ISR-based timers to avoid being blocked
@@ -57,7 +62,7 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 ---
 ---
 
-## Prerequisite
+## Prerequisites
 
  1. [`Arduino IDE 1.8.13+` for Arduino](https://www.arduino.cc/en/Main/Software)
  2. [`Arduino SAM DUE core v1.6.12+`](https://www.arduino.cc/en/Guide/ArduinoDue) for SAM DUE ARM Cortex-M3 boards
@@ -94,7 +99,7 @@ Another way to install is to:
 
 1. Install [VS Code](https://code.visualstudio.com/)
 2. Install [PlatformIO](https://platformio.org/platformio-ide)
-3. Install [**SAMDUE_TimerInterrupt** library](https://platformio.org/lib/show/11428/SAMDUE_TimerInterrupt) by using [Library Manager](https://platformio.org/lib/show/11428/SAMDUE_TimerInterrupt/installation). Search for **SAMDUE_TimerInterrupt** in [Platform.io Author's Libraries](https://platformio.org/lib/search?query=author:%22Khoi%20Hoang%22)
+3. Install [**SAMDUE_TimerInterrupt** library](https://platformio.org/lib/show/11428/SAMDUE_TimerInterrupt) or [**SAMDUE_TimerInterrupt** library](https://platformio.org/lib/show/11428/SAMDUE_TimerInterrupt) by using [Library Manager](https://platformio.org/lib/show/11467/SAMDUE_TimerInterrupt/installation). Search for **SAMDUE_TimerInterrupt** in [Platform.io Author's Libraries](https://platformio.org/lib/search?query=author:%22Khoi%20Hoang%22)
 4. Use included [platformio.ini](platformio/platformio.ini) file from examples to ensure that all dependent libraries will installed automatically. Please visit documentation for the other options and examples at [Project Configuration File](https://docs.platformio.org/page/projectconf.html)
 
 ---
@@ -356,12 +361,13 @@ void setup()
  6. [SwitchDebounce](examples/SwitchDebounce)
  7. [TimerInterruptTest](examples/TimerInterruptTest)
  8. [TimerInterruptLEDDemo](examples/TimerInterruptLEDDemo)
-
+ 9. [**Change_Interval**](examples/Change_Interval). New
+10. [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex). New
 
 ---
 ---
 
-### Example [ISR_16_Timers_Array](examples/ISR_16_Timers_Array)
+### Example [ISR_16_Timers_Array_Complex](examples/ISR_16_Timers_Array_Complex)
 
 ```
 #if !( defined(ARDUINO_SAM_DUE) || defined(__SAM3X8E__) )
@@ -389,8 +395,7 @@ void setup()
   #define LED_RED           3
 #endif
 
-// Resolution for ISR_Timer. Smaller => more precise.
-#define HW_TIMER_INTERVAL_US      100L
+#define HW_TIMER_INTERVAL_US      10000L
 
 volatile uint32_t startMillis = 0;
 
@@ -398,26 +403,19 @@ volatile uint32_t startMillis = 0;
 // Each SAMDUE_ISR_Timer can service 16 different ISR-based timers
 SAMDUE_ISR_Timer ISR_Timer;
 
-#define LED_TOGGLE_INTERVAL_MS        500L
+#define LED_TOGGLE_INTERVAL_MS        2000L
 
 void TimerHandler(void)
 {
   static bool toggle  = false;
-  static bool started = false;
   static int timeRun  = 0;
 
   ISR_Timer.run();
 
-  // Toggle LED every LED_TOGGLE_INTERVAL_MS = 500ms = 0.5s
-  if (++timeRun == ( (LED_TOGGLE_INTERVAL_MS * 1000) / HW_TIMER_INTERVAL_US) )
+  // Toggle LED every LED_TOGGLE_INTERVAL_MS = 2000ms = 2s
+  if (++timeRun == ((LED_TOGGLE_INTERVAL_MS * 1000) / HW_TIMER_INTERVAL_US) )
   {
     timeRun = 0;
-
-    if (!started)
-    {
-      started = true;
-      pinMode(LED_BUILTIN, OUTPUT);
-    }
 
     //timer interrupt toggles pin LED_BUILTIN
     digitalWrite(LED_BUILTIN, toggle);
@@ -425,255 +423,181 @@ void TimerHandler(void)
   }
 }
 
-#define NUMBER_ISR_TIMERS         16
+/////////////////////////////////////////////////
 
-// You can assign any interval for any timer here, in milliseconds
-uint32_t TimerInterval[NUMBER_ISR_TIMERS] =
-{
-  1000L,  2000L,  3000L,  4000L,  5000L,  6000L,  7000L,  8000L,
-  9000L, 10000L, 11000L, 12000L, 13000L, 14000L, 15000L, 16000L
-};
+#define NUMBER_ISR_TIMERS         16
 
 typedef void (*irqCallback)  (void);
 
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
-void printStatus(uint16_t index, unsigned long deltaMillis, unsigned long currentMillis)
-{ 
-  Serial.print(TimerInterval[index]/1000);
-  Serial.print("s: Delta ms = ");
-  Serial.print(deltaMillis);
-  Serial.print(", ms = ");
-  Serial.println(currentMillis);
-}
+/////////////////////////////////////////////////
+
+#define USE_COMPLEX_STRUCT      true
+
+#if USE_COMPLEX_STRUCT
+
+  typedef struct 
+  {
+    irqCallback   irqCallbackFunc;
+    uint32_t      TimerInterval;
+    unsigned long deltaMillis;
+    unsigned long previousMillis;
+  } ISRTimerData;
+  
+  // In NRF52, avoid doing something fancy in ISR, for example Serial.print()
+  // The pure simple Serial.prints here are just for demonstration and testing. Must be eliminate in working environment
+  // Or you can get this run-time error / crash
+  
+  void doingSomething(int index);
+
+#else
+
+  volatile unsigned long deltaMillis    [NUMBER_ISR_TIMERS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  volatile unsigned long previousMillis [NUMBER_ISR_TIMERS] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+  
+  // You can assign any interval for any timer here, in milliseconds
+  uint32_t TimerInterval[NUMBER_ISR_TIMERS] =
+  {
+    5000L,  10000L,  15000L,  20000L,  25000L,  30000L,  35000L,  40000L,
+    45000L, 50000L,  55000L,  60000L,  65000L,  70000L,  75000L,  80000L
+  };
+  
+  void doingSomething(int index)
+  {
+    unsigned long currentMillis  = millis();
+    
+    deltaMillis[index]    = currentMillis - previousMillis[index];
+    previousMillis[index] = currentMillis;
+  }
+
 #endif
 
-// In SAMDUE, avoid doing something fancy in ISR, for example complex Serial.print with String() argument
-// The pure simple Serial.prints here are just for demonstration and testing. Must be eliminate in working environment
-// Or you can get this run-time error / crash
+////////////////////////////////////
+// Shared
+////////////////////////////////////
+
 void doingSomething0()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(0, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(0);
 }
 
 void doingSomething1()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(1, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(1);
 }
 
 void doingSomething2()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(2, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(2);
 }
 
 void doingSomething3()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(3, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(3);
 }
 
 void doingSomething4()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(4, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(4);
 }
 
 void doingSomething5()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(5, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(5);
 }
 
 void doingSomething6()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(6, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(6);
 }
 
 void doingSomething7()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(7, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(7);
 }
 
 void doingSomething8()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(8, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(8);
 }
 
 void doingSomething9()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(9, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(9);
 }
 
 void doingSomething10()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(10, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(10);
 }
 
-// In SAMDUE, avoid doing something fancy in ISR, for example complex Serial.print with String() argument
-// The pure simple Serial.prints here are just for demonstration and testing. Must be eliminate in working environment
-// Or you can get this run-time error / crash
 void doingSomething11()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(11, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(11);
 }
 
-// In SAMDUE, avoid doing something fancy in ISR, for example complex Serial.print with String() argument
-// The pure simple Serial.prints here are just for demonstration and testing. Must be eliminate in working environment
-// Or you can get this run-time error / crash
 void doingSomething12()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(12, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(12);
 }
 
 void doingSomething13()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(13, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(13);
 }
 
 void doingSomething14()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(14, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(14);
 }
 
 void doingSomething15()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
-  static unsigned long previousMillis = startMillis;
-  unsigned long currentMillis = millis();
-  unsigned long deltaMillis   = currentMillis - previousMillis;
-  
-  printStatus(15, deltaMillis, currentMillis);
-  
-  previousMillis = currentMillis;
-#endif
+  doingSomething(15);
 }
 
-irqCallback irqCallbackFunc[NUMBER_ISR_TIMERS] =
-{
-  doingSomething0,  doingSomething1,  doingSomething2,  doingSomething3, 
-  doingSomething4,  doingSomething5,  doingSomething6,  doingSomething7, 
-  doingSomething8,  doingSomething9,  doingSomething10, doingSomething11,
-  doingSomething12, doingSomething13, doingSomething14, doingSomething15
-};
+#if USE_COMPLEX_STRUCT
 
-////////////////////////////////////////////////
+  ISRTimerData curISRTimerData[NUMBER_ISR_TIMERS] =
+  {
+    //irqCallbackFunc, TimerInterval, deltaMillis, previousMillis
+    { doingSomething0,    5000L, 0, 0 },
+    { doingSomething1,   10000L, 0, 0 },
+    { doingSomething2,   15000L, 0, 0 },
+    { doingSomething3,   20000L, 0, 0 },
+    { doingSomething4,   25000L, 0, 0 },
+    { doingSomething5,   30000L, 0, 0 },
+    { doingSomething6,   35000L, 0, 0 },
+    { doingSomething7,   40000L, 0, 0 },
+    { doingSomething8,   45000L, 0, 0 },
+    { doingSomething9,   50000L, 0, 0 },
+    { doingSomething10,  55000L, 0, 0 },
+    { doingSomething11,  60000L, 0, 0 },
+    { doingSomething12,  65000L, 0, 0 },
+    { doingSomething13,  70000L, 0, 0 },
+    { doingSomething14,  75000L, 0, 0 },
+    { doingSomething15,  80000L, 0, 0 }
+  };
+  
+  void doingSomething(int index)
+  {
+    unsigned long currentMillis  = millis();
+    
+    curISRTimerData[index].deltaMillis    = currentMillis - curISRTimerData[index].previousMillis;
+    curISRTimerData[index].previousMillis = currentMillis;
+  }
 
+#else
+
+  irqCallback irqCallbackFunc[NUMBER_ISR_TIMERS] =
+  {
+    doingSomething0,  doingSomething1,  doingSomething2,  doingSomething3,
+    doingSomething4,  doingSomething5,  doingSomething6,  doingSomething7,
+    doingSomething8,  doingSomething9,  doingSomething10, doingSomething11,
+    doingSomething12, doingSomething13, doingSomething14, doingSomething15
+  };
+
+#endif
+///////////////////////////////////////////
 
 #define SIMPLE_TIMER_MS        2000L
 
@@ -687,13 +611,23 @@ SimpleTimer simpleTimer;
 void simpleTimerDoingSomething2s()
 {
   static unsigned long previousMillis = startMillis;
+
   unsigned long currMillis = millis();
-  
-  Serial.print("simpleTimer2s: Dms=");
-  Serial.print(SIMPLE_TIMER_MS);
-  Serial.print(", actual=");
-  Serial.println(currMillis - previousMillis);
-  
+
+  Serial.println("SimpleTimer : " + String(SIMPLE_TIMER_MS / 1000) + ", ms = " + String(currMillis) 
+                     + ", Dms : " + String(currMillis - previousMillis));
+
+  for (int i = 0; i < NUMBER_ISR_TIMERS; i++)
+  {
+#if USE_COMPLEX_STRUCT    
+    Serial.println("Timer : " + String(i) + ", programmed : " + String(curISRTimerData[i].TimerInterval) 
+                              + ", actual : " + String(curISRTimerData[i].deltaMillis));
+#else
+    Serial.println("Timer : " + String(i) + ", programmed : " + String(TimerInterval[i]) 
+                              + ", actual : " + String(deltaMillis[i]));
+#endif    
+  }
+
   previousMillis = currMillis;
 }
 
@@ -715,35 +649,45 @@ uint16_t attachDueInterrupt(double microseconds, timerCallback callback, const c
 
 void setup()
 {
+  pinMode(LED_BUILTIN, OUTPUT);
+
   Serial.begin(115200);
   while (!Serial);
-  
-  Serial.println("\nStarting ISR_16_Timers_Array on " + String(BOARD_NAME));
-  Serial.println("Version : " + String(SAMDUE_TIMER_INTERRUPT_VERSION));
+
+  Serial.println("\nStarting ISR_16_Timers_Array_Complex on " + String(BOARD_NAME));
+  Serial.println(SAMDUE_TIMER_INTERRUPT_VERSION);
   Serial.println("CPU Frequency = " + String(F_CPU / 1000000) + " MHz");
   Serial.println("Timer Frequency = " + String(SystemCoreClock / 1000000) + " MHz");
 
   // Interval in microsecs
   attachDueInterrupt(HW_TIMER_INTERVAL_US, TimerHandler, "ITimer");
-  
+
+  startMillis = millis();
+
   // Just to demonstrate, don't use too many ISR Timers if not absolutely necessary
   // You can use up to 16 timer for each ISR_Timer
   for (int i = 0; i < NUMBER_ISR_TIMERS; i++)
   {
-    ISR_Timer.setInterval(TimerInterval[i], irqCallbackFunc[i]); 
+#if USE_COMPLEX_STRUCT
+    curISRTimerData[i].previousMillis = startMillis;
+    ISR_Timer.setInterval(curISRTimerData[i].TimerInterval, curISRTimerData[i].irqCallbackFunc);
+#else
+    previousMillis[i] = startMillis;
+    ISR_Timer.setInterval(TimerInterval[i], irqCallbackFunc[i]);
+#endif    
   }
 
   // You need this timer for non-critical tasks. Avoid abusing ISR if not absolutely necessary.
   simpleTimer.setInterval(SIMPLE_TIMER_MS, simpleTimerDoingSomething2s);
 }
 
-#define BLOCKING_TIME_MS      11111L
+#define BLOCKING_TIME_MS      10000L
 
 void loop()
 {
   // This unadvised blocking task is used to demonstrate the blocking effects onto the execution and accuracy to Software timer
   // You see the time elapse of ISR_Timer still accurate, whereas very unaccurate for Software Timer
-  // The time elapse for 2000ms software timer now becomes 11111ms (BLOCKING_TIME_MS)
+  // The time elapse for 2000ms software timer now becomes 3000ms (BLOCKING_TIME_MS)
   // While that of ISR_Timer is still prefect.
   delay(BLOCKING_TIME_MS);
 
@@ -763,7 +707,8 @@ While software timer, **programmed for 2s, is activated after 10.917s !!!**. The
 
 ```
 Starting ISR_Timer_Complex_Ethernet on SAM DUE
-Version : 1.0.1
+SAMDUE_TimerInterrupt v1.1.1
+CPU Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
 Timer(0), us = 50000.00
 ITimer attached to Timer(0)
@@ -851,7 +796,7 @@ blynkDoingSomething2s: Delta programmed ms = 2000, actual = 3000
 
 ```
 Starting TimerInterruptTest on SAM DUE
-Version : 1.0.1
+SAMDUE_TimerInterrupt v1.1.1
 CPU Frequency = 84 MHz
 Timer Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
@@ -912,7 +857,7 @@ Stop ITimer0, millis() = 45009
 
 ```
 Starting ISR_16_Timers_Array on SAM DUE
-Version : 1.0.1
+SAMDUE_TimerInterrupt v1.1.1
 CPU Frequency = 84 MHz
 Timer Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
@@ -971,8 +916,172 @@ simpleTimer2s: Dms=2000, actual=11111
 1s: Delta ms = 1000, ms = 47006
 
 ```
+
+---
+
+4. The following is the sample terminal output when running example [Change_Interval](examples/Change_Interval) to demonstrate how to change Timer Interval on-the-fly
+
+```
+Starting Change_Interval on SAM DUE
+SAMDUE_TimerInterrupt v1.1.1
+CPU Frequency = 84 MHz
+Timer Frequency = 84 MHz
+Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
+ITimer0 attached to Timer(0)
+Using Timer(1) = TC0, channel = 1, IRQ = TC1_IRQn
+ITimer1 attached to Timer(1)
+Time = 10001, Timer0Count = 19, Timer1Count = 9
+Time = 20002, Timer0Count = 39, Timer1Count = 19
+ITimer0 attached to Timer(0)
+ITimer1 attached to Timer(1)
+Changing Interval, Timer0 = 1000,  Timer1 = 2000
+Time = 30003, Timer0Count = 49, Timer1Count = 24
+Time = 40004, Timer0Count = 59, Timer1Count = 29
+ITimer0 attached to Timer(0)
+ITimer1 attached to Timer(1)
+Changing Interval, Timer0 = 500,  Timer1 = 1000
+Time = 50005, Timer0Count = 79, Timer1Count = 39
+Time = 60006, Timer0Count = 99, Timer1Count = 49
+ITimer0 attached to Timer(0)
+ITimer1 attached to Timer(1)
+Changing Interval, Timer0 = 1000,  Timer1 = 2000
+Time = 70007, Timer0Count = 109, Timer1Count = 54
+Time = 80008, Timer0Count = 119, Timer1Count = 59
+ITimer0 attached to Timer(0)
+ITimer1 attached to Timer(1)
+Changing Interval, Timer0 = 500,  Timer1 = 1000
+Time = 90009, Timer0Count = 139, Timer1Count = 69
+```
+
+---
+
+5. The following is the sample terminal output when running new example [ISR_16_Timers_Array_Complex](examples/ISR_16_Timers_Array_Complex) on **Arduino SAM DUE** to demonstrate the accuracy of ISR Hardware Timer, **especially when system is very busy or blocked**. The 16 independent ISR timers are **programmed to be activated repetitively after certain intervals, is activated exactly after that programmed interval !!!**
+
+While software timer, **programmed for 2s, is activated after 10.000s in loop()!!!**.
+
+In this example, 16 independent ISR Timers are used, yet utilized just one Hardware Timer. The Timer Intervals and Function Pointers are stored in arrays to facilitate the code modification.
+
+```
+Starting ISR_16_Timers_Array_Complex on SAM DUE
+SAMDUE_TimerInterrupt v1.1.1
+CPU Frequency = 84 MHz
+Timer Frequency = 84 MHz
+Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
+ITimer attached to Timer(0)
+SimpleTimer : 2, ms = 10009, Dms : 10000
+Timer : 0, programmed : 5000, actual : 5007
+Timer : 1, programmed : 10000, actual : 0
+Timer : 2, programmed : 15000, actual : 0
+Timer : 3, programmed : 20000, actual : 0
+Timer : 4, programmed : 25000, actual : 0
+Timer : 5, programmed : 30000, actual : 0
+Timer : 6, programmed : 35000, actual : 0
+Timer : 7, programmed : 40000, actual : 0
+Timer : 8, programmed : 45000, actual : 0
+Timer : 9, programmed : 50000, actual : 0
+Timer : 10, programmed : 55000, actual : 0
+Timer : 11, programmed : 60000, actual : 0
+Timer : 12, programmed : 65000, actual : 0
+Timer : 13, programmed : 70000, actual : 0
+Timer : 14, programmed : 75000, actual : 0
+Timer : 15, programmed : 80000, actual : 0
+SimpleTimer : 2, ms = 20061, Dms : 10052
+Timer : 0, programmed : 5000, actual : 5000
+Timer : 1, programmed : 10000, actual : 10000
+Timer : 2, programmed : 15000, actual : 15007
+Timer : 3, programmed : 20000, actual : 20007
+Timer : 4, programmed : 25000, actual : 0
+Timer : 5, programmed : 30000, actual : 0
+Timer : 6, programmed : 35000, actual : 0
+Timer : 7, programmed : 40000, actual : 0
+Timer : 8, programmed : 45000, actual : 0
+Timer : 9, programmed : 50000, actual : 0
+Timer : 10, programmed : 55000, actual : 0
+Timer : 11, programmed : 60000, actual : 0
+Timer : 12, programmed : 65000, actual : 0
+Timer : 13, programmed : 70000, actual : 0
+Timer : 14, programmed : 75000, actual : 0
+Timer : 15, programmed : 80000, actual : 0
+...
+SimpleTimer : 2, ms = 140731, Dms : 10057
+Timer : 0, programmed : 5000, actual : 5000
+Timer : 1, programmed : 10000, actual : 10000
+Timer : 2, programmed : 15000, actual : 15000
+Timer : 3, programmed : 20000, actual : 20000
+Timer : 4, programmed : 25000, actual : 25000
+Timer : 5, programmed : 30000, actual : 30000
+Timer : 6, programmed : 35000, actual : 35000
+Timer : 7, programmed : 40000, actual : 40000
+Timer : 8, programmed : 45000, actual : 45000
+Timer : 9, programmed : 50000, actual : 50000
+Timer : 10, programmed : 55000, actual : 55000
+Timer : 11, programmed : 60000, actual : 60000
+Timer : 12, programmed : 65000, actual : 65000
+Timer : 13, programmed : 70000, actual : 70000
+Timer : 14, programmed : 75000, actual : 75007
+Timer : 15, programmed : 80000, actual : 80007
+SimpleTimer : 2, ms = 150788, Dms : 10057
+Timer : 0, programmed : 5000, actual : 5000
+Timer : 1, programmed : 10000, actual : 10000
+Timer : 2, programmed : 15000, actual : 15000
+Timer : 3, programmed : 20000, actual : 20000
+Timer : 4, programmed : 25000, actual : 25000
+Timer : 5, programmed : 30000, actual : 30000
+Timer : 6, programmed : 35000, actual : 35000
+Timer : 7, programmed : 40000, actual : 40000
+Timer : 8, programmed : 45000, actual : 45000
+Timer : 9, programmed : 50000, actual : 50000
+Timer : 10, programmed : 55000, actual : 55000
+Timer : 11, programmed : 60000, actual : 60000
+Timer : 12, programmed : 65000, actual : 65000
+Timer : 13, programmed : 70000, actual : 70000
+Timer : 14, programmed : 75000, actual : 75000
+Timer : 15, programmed : 80000, actual : 80007
+SimpleTimer : 2, ms = 160845, Dms : 10057
+Timer : 0, programmed : 5000, actual : 5000
+Timer : 1, programmed : 10000, actual : 10000
+Timer : 2, programmed : 15000, actual : 15000
+Timer : 3, programmed : 20000, actual : 20000
+Timer : 4, programmed : 25000, actual : 25000
+Timer : 5, programmed : 30000, actual : 30000
+Timer : 6, programmed : 35000, actual : 35000
+Timer : 7, programmed : 40000, actual : 40000
+Timer : 8, programmed : 45000, actual : 45000
+Timer : 9, programmed : 50000, actual : 50000
+Timer : 10, programmed : 55000, actual : 55000
+Timer : 11, programmed : 60000, actual : 60000
+Timer : 12, programmed : 65000, actual : 65000
+Timer : 13, programmed : 70000, actual : 70000
+Timer : 14, programmed : 75000, actual : 75000
+Timer : 15, programmed : 80000, actual : 80000
+SimpleTimer : 2, ms = 170902, Dms : 10057
+Timer : 0, programmed : 5000, actual : 5000
+Timer : 1, programmed : 10000, actual : 10000
+Timer : 2, programmed : 15000, actual : 15000
+Timer : 3, programmed : 20000, actual : 20000
+Timer : 4, programmed : 25000, actual : 25000
+Timer : 5, programmed : 30000, actual : 30000
+Timer : 6, programmed : 35000, actual : 35000
+Timer : 7, programmed : 40000, actual : 40000
+Timer : 8, programmed : 45000, actual : 45000
+Timer : 9, programmed : 50000, actual : 50000
+Timer : 10, programmed : 55000, actual : 55000
+Timer : 11, programmed : 60000, actual : 60000
+Timer : 12, programmed : 65000, actual : 65000
+Timer : 13, programmed : 70000, actual : 70000
+Timer : 14, programmed : 75000, actual : 75000
+Timer : 15, programmed : 80000, actual : 80000
+
+```
+
 ---
 ---
+
+### Releases v1.1.1
+
+1. Add example [**Change_Interval**](examples/Change_Interval) and [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex)
+2. Bump up version to sync with other TimerInterrupt Libraries. Modify Version String.
+
 
 ### Releases v1.0.1
 
