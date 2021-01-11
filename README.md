@@ -11,7 +11,7 @@
 
 ## Table of Contents
 
-* [Why do we need this SAMD_TimerInterrupt library](#why-do-we-need-this-samd_timerinterrupt-library)
+* [Why do we need this SAMDUE_TimerInterrupt library](#why-do-we-need-this-samdue_timerinterrupt-library)
   * [Features](#features)
   * [Why using ISR-based Hardware Timer Interrupt is better](#why-using-isr-based-hardware-timer-interrupt-is-better)
   * [Currently supported Boards](#currently-supported-boards)
@@ -77,7 +77,7 @@
 ---
 ---
 
-### Why do we need this [SAMD_TimerInterrupt library](https://github.com/khoih-prog/SAMD_TimerInterrupt)
+### Why do we need this [SAMDUE_TimerInterrupt library](https://github.com/khoih-prog/SAMDUE_TimerInterrupt)
 
 ### Features
 
