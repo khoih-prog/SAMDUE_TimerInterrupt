@@ -1,30 +1,31 @@
 /****************************************************************************************************************************
-   ISR_16_Timers_Array.ino
-   For SAM DUE boards
-   Written by Khoi Hoang
+  ISR_16_Timers_Array.ino
+  For SAM DUE boards
+  Written by Khoi Hoang
 
-   Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
-   Licensed under MIT license
+  Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
+  Licensed under MIT license
 
-   Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
-   unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
-   The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
-   Therefore, their executions are not blocked by bad-behaving functions / tasks.
-   This important feature is absolutely necessary for mission-critical tasks.
+  Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
+  unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
+  The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
+  Therefore, their executions are not blocked by bad-behaving functions / tasks.
+  This important feature is absolutely necessary for mission-critical tasks.
 
-   Based on SimpleTimer - A timer library for Arduino.
-   Author: mromani@ottotecnica.com
-   Copyright (c) 2010 OTTOTECNICA Italy
+  Based on SimpleTimer - A timer library for Arduino.
+  Author: mromani@ottotecnica.com
+  Copyright (c) 2010 OTTOTECNICA Italy
 
-   Based on BlynkTimer.h
-   Author: Volodymyr Shymanskyy
+  Based on BlynkTimer.h
+  Author: Volodymyr Shymanskyy
 
-   Version: 1.1.1
+  Version: 1.2.0
 
-   Version Modified By   Date      Comments
-   ------- -----------  ---------- -----------
-   1.0.1   K Hoang      06/11/2020 Initial coding
-   1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  Version Modified By   Date      Comments
+  ------- -----------  ---------- -----------
+  1.0.1   K Hoang      06/11/2020 Initial coding
+  1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  1.2.0   K.Hoang      10/01/2021 Add better debug feature. Optimize code and examples to reduce RAM usage
 *****************************************************************************************************************************/
 /*
    Notes:
@@ -59,9 +60,12 @@
   #error This code is designed to run on SAM DUE board / platform! Please check your Tools->Board setting.
 #endif
 
-// These define's must be placed at the beginning before #include "SAMDTimerInterrupt.h"
-// Don't define SAMDUE_TIMER_INTERRUPT_DEBUG > 0. Only for special ISR debugging only. Can hang the system.
-#define SAMDUE_TIMER_INTERRUPT_DEBUG      1
+// These define's must be placed at the beginning before #include "SAMDUETimerInterrupt.h"
+// _TIMERINTERRUPT_LOGLEVEL_ from 0 to 4
+// Don't define _TIMERINTERRUPT_LOGLEVEL_ > 0. Only for special ISR debugging only. Can hang the system.
+// Don't define TIMER_INTERRUPT_DEBUG > 2. Only for special ISR debugging only. Can hang the system.
+#define TIMER_INTERRUPT_DEBUG         0
+#define _TIMERINTERRUPT_LOGLEVEL_     0
 
 #include "SAMDUETimerInterrupt.h"
 #include "SAMDUE_ISR_Timer.h"
@@ -91,7 +95,7 @@ SAMDUE_ISR_Timer ISR_Timer;
 
 #define LED_TOGGLE_INTERVAL_MS        500L
 
-void TimerHandler(void)
+void TimerHandler()
 {
   static bool toggle  = false;
   static bool started = false;
@@ -125,16 +129,13 @@ uint32_t TimerInterval[NUMBER_ISR_TIMERS] =
   9000L, 10000L, 11000L, 12000L, 13000L, 14000L, 15000L, 16000L
 };
 
-typedef void (*irqCallback)  (void);
+typedef void (*irqCallback)  ();
 
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
+#if (TIMER_INTERRUPT_DEBUG > 0)
 void printStatus(uint16_t index, unsigned long deltaMillis, unsigned long currentMillis)
-{ 
-  Serial.print(TimerInterval[index]/1000);
-  Serial.print("s: Delta ms = ");
-  Serial.print(deltaMillis);
-  Serial.print(", ms = ");
-  Serial.println(currentMillis);
+{
+  Serial.print(TimerInterval[index] / 1000); Serial.print("s: Delta ms = "); Serial.print(deltaMillis);
+  Serial.print(", ms = "); Serial.println(currentMillis);
 }
 #endif
 
@@ -143,143 +144,143 @@ void printStatus(uint16_t index, unsigned long deltaMillis, unsigned long curren
 // Or you can get this run-time error / crash
 void doingSomething0()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
+#if (TIMER_INTERRUPT_DEBUG > 0)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(0, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething1()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(1, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething2()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(2, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething3()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(3, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething4()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(4, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething5()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(5, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething6()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(6, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething7()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(7, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething8()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(8, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething9()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(9, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething10()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(10, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
@@ -289,13 +290,13 @@ void doingSomething10()
 // Or you can get this run-time error / crash
 void doingSomething11()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(11, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
@@ -305,52 +306,52 @@ void doingSomething11()
 // Or you can get this run-time error / crash
 void doingSomething12()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(12, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething13()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(13, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething14()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(14, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
 
 void doingSomething15()
 {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 1)
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long previousMillis = startMillis;
   unsigned long currentMillis = millis();
   unsigned long deltaMillis   = currentMillis - previousMillis;
-  
+
   printStatus(15, deltaMillis, currentMillis);
-  
+
   previousMillis = currentMillis;
 #endif
 }
@@ -379,12 +380,10 @@ void simpleTimerDoingSomething2s()
 {
   static unsigned long previousMillis = startMillis;
   unsigned long currMillis = millis();
-  
-  Serial.print("simpleTimer2s: Dms=");
-  Serial.print(SIMPLE_TIMER_MS);
-  Serial.print(", actual=");
-  Serial.println(currMillis - previousMillis);
-  
+
+  Serial.print(F("simpleTimer2s: Dms=")); Serial.print(SIMPLE_TIMER_MS);
+  Serial.print(F(", actual=")); Serial.println(currMillis - previousMillis);
+
   previousMillis = currMillis;
 }
 
@@ -396,10 +395,7 @@ uint16_t attachDueInterrupt(double microseconds, timerCallback callback, const c
 
   uint16_t timerNumber = dueTimerInterrupt.getTimerNumber();
   
-  Serial.print(TimerName);
-  Serial.print(" attached to Timer(");
-  Serial.print(timerNumber);
-  Serial.println(")");
+  Serial.print(TimerName); Serial.print(F(" attached to Timer(")); Serial.print(timerNumber); Serial.println(F(")"));
 
   return timerNumber;
 }
@@ -408,11 +404,13 @@ void setup()
 {
   Serial.begin(115200);
   while (!Serial);
+
+  delay(100);
   
-  Serial.println("\nStarting ISR_16_Timers_Array on " + String(BOARD_NAME));
+  Serial.print(F("\nStarting ISR_16_Timers_Array on ")); Serial.println(BOARD_NAME);
   Serial.println(SAMDUE_TIMER_INTERRUPT_VERSION);
-  Serial.println("CPU Frequency = " + String(F_CPU / 1000000) + " MHz");
-  Serial.println("Timer Frequency = " + String(SystemCoreClock / 1000000) + " MHz");
+  Serial.print(F("CPU Frequency = ")); Serial.print(F_CPU / 1000000); Serial.println(F(" MHz"));
+  Serial.print(F("Timer Frequency = ")); Serial.print(SystemCoreClock / 1000000); Serial.println(F(" MHz"));
 
   // Interval in microsecs
   attachDueInterrupt(HW_TIMER_INTERVAL_US, TimerHandler, "ITimer");

@@ -1,30 +1,31 @@
 /****************************************************************************************************************************
-   RPM_Measure.ino
-   For SAM DUE boards
-   Written by Khoi Hoang
+  RPM_Measure.ino
+  For SAM DUE boards
+  Written by Khoi Hoang
 
-   Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
-   Licensed under MIT license
+  Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
+  Licensed under MIT license
 
-   Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
-   unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
-   The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
-   Therefore, their executions are not blocked by bad-behaving functions / tasks.
-   This important feature is absolutely necessary for mission-critical tasks.
+  Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
+  unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
+  The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
+  Therefore, their executions are not blocked by bad-behaving functions / tasks.
+  This important feature is absolutely necessary for mission-critical tasks.
 
-   Based on SimpleTimer - A timer library for Arduino.
-   Author: mromani@ottotecnica.com
-   Copyright (c) 2010 OTTOTECNICA Italy
+  Based on SimpleTimer - A timer library for Arduino.
+  Author: mromani@ottotecnica.com
+  Copyright (c) 2010 OTTOTECNICA Italy
 
-   Based on BlynkTimer.h
-   Author: Volodymyr Shymanskyy
+  Based on BlynkTimer.h
+  Author: Volodymyr Shymanskyy
 
-   Version: 1.1.1
+  Version: 1.2.0
 
-   Version Modified By   Date      Comments
-   ------- -----------  ---------- -----------
-   1.0.1   K Hoang      06/11/2020 Initial coding
-   1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  Version Modified By   Date      Comments
+  ------- -----------  ---------- -----------
+  1.0.1   K Hoang      06/11/2020 Initial coding
+  1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  1.2.0   K.Hoang      10/01/2021 Add better debug feature. Optimize code and examples to reduce RAM usage
 *****************************************************************************************************************************/
 /*
    Notes:
@@ -60,9 +61,12 @@
   #error This code is designed to run on SAM DUE board / platform! Please check your Tools->Board setting.
 #endif
 
-// These define's must be placed at the beginning before #include "SAMDTimerInterrupt.h"
-// Don't define SAMDUE_TIMER_INTERRUPT_DEBUG > 0. Only for special ISR debugging only. Can hang the system.
-#define SAMDUE_TIMER_INTERRUPT_DEBUG      1
+// These define's must be placed at the beginning before #include "SAMDUETimerInterrupt.h"
+// _TIMERINTERRUPT_LOGLEVEL_ from 0 to 4
+// Don't define _TIMERINTERRUPT_LOGLEVEL_ > 0. Only for special ISR debugging only. Can hang the system.
+// Don't define TIMER_INTERRUPT_DEBUG > 2. Only for special ISR debugging only. Can hang the system.
+#define TIMER_INTERRUPT_DEBUG         0
+#define _TIMERINTERRUPT_LOGLEVEL_     0
 
 #include "SAMDUETimerInterrupt.h"
 
@@ -108,7 +112,10 @@ void TimerHandler()
 
     avgRPM = ( 2 * avgRPM + RPM) / 3,
 
-    Serial.println("RPM = " + String(avgRPM) + ", rotationTime ms = " + String(rotationTime * TIMER0_INTERVAL_MS) );
+#if (TIMER_INTERRUPT_DEBUG > 1)
+      Serial.print("RPM = "); Serial.print(avgRPM);
+      Serial.print(", rotationTime ms = "); Serial.println(rotationTime * TIMER1_INTERVAL_MS);
+#endif
 
     rotationTime = 0;
     debounceCounter = 0;
@@ -122,7 +129,11 @@ void TimerHandler()
   {
     // If idle, set RPM to 0, don't increase rotationTime
     RPM = 0;
-    Serial.println("RPM = " + String(RPM) + ", rotationTime = " + String(rotationTime) );
+    
+#if (TIMER_INTERRUPT_DEBUG > 1)   
+    Serial.print("RPM = "); Serial.print(RPM); Serial.print(", rotationTime = "); Serial.println(rotationTime);
+#endif
+    
     rotationTime = 0;
   }
   else
@@ -139,10 +150,7 @@ uint16_t attachDueInterrupt(double microseconds, timerCallback callback, const c
 
   uint16_t timerNumber = dueTimerInterrupt.getTimerNumber();
   
-  Serial.print(TimerName);
-  Serial.print(" attached to Timer(");
-  Serial.print(timerNumber);
-  Serial.println(")");
+  Serial.print(TimerName); Serial.print(F(" attached to Timer(")); Serial.print(timerNumber); Serial.println(F(")"));
 
   return timerNumber;
 }
@@ -151,11 +159,13 @@ void setup()
 { 
   Serial.begin(115200);
   while (!Serial);
+
+  delay(100);
   
-  Serial.println("\nStarting RPM_Measure on " + String(BOARD_NAME));
+  Serial.print(F("\nStarting RPM_Measure on ")); Serial.println(BOARD_NAME);
   Serial.println(SAMDUE_TIMER_INTERRUPT_VERSION);
-  Serial.println("CPU Frequency = " + String(F_CPU / 1000000) + " MHz");
-  Serial.println("Timer Frequency = " + String(SystemCoreClock / 1000000) + " MHz");
+  Serial.print(F("CPU Frequency = ")); Serial.print(F_CPU / 1000000); Serial.println(F(" MHz"));
+  Serial.print(F("Timer Frequency = ")); Serial.print(SystemCoreClock / 1000000); Serial.println(F(" MHz"));
 
   // Interval in microsecs
   attachDueInterrupt(TIMER0_INTERVAL_MS * 1000, TimerHandler, "ITimer");

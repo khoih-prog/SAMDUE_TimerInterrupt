@@ -1,30 +1,31 @@
 /****************************************************************************************************************************
-   SwitchDebounce.ino
-   For SAM DUE boards
-   Written by Khoi Hoang
+  SwitchDebounce.ino
+  For SAM DUE boards
+  Written by Khoi Hoang
 
-   Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
-   Licensed under MIT license
+  Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
+  Licensed under MIT license
 
-   Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
-   unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
-   The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
-   Therefore, their executions are not blocked by bad-behaving functions / tasks.
-   This important feature is absolutely necessary for mission-critical tasks.
+  Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
+  unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
+  The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
+  Therefore, their executions are not blocked by bad-behaving functions / tasks.
+  This important feature is absolutely necessary for mission-critical tasks.
 
-   Based on SimpleTimer - A timer library for Arduino.
-   Author: mromani@ottotecnica.com
-   Copyright (c) 2010 OTTOTECNICA Italy
+  Based on SimpleTimer - A timer library for Arduino.
+  Author: mromani@ottotecnica.com
+  Copyright (c) 2010 OTTOTECNICA Italy
 
-   Based on BlynkTimer.h
-   Author: Volodymyr Shymanskyy
+  Based on BlynkTimer.h
+  Author: Volodymyr Shymanskyy
 
-   Version: 1.1.1
+  Version: 1.2.0
 
-   Version Modified By   Date      Comments
-   ------- -----------  ---------- -----------
-   1.0.1   K Hoang      06/11/2020 Initial coding
-   1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  Version Modified By   Date      Comments
+  ------- -----------  ---------- -----------
+  1.0.1   K Hoang      06/11/2020 Initial coding
+  1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  1.2.0   K.Hoang      10/01/2021 Add better debug feature. Optimize code and examples to reduce RAM usage
 *****************************************************************************************************************************/
 /*
    Notes:
@@ -48,9 +49,12 @@
   #error This code is designed to run on SAM DUE board / platform! Please check your Tools->Board setting.
 #endif
 
-// These define's must be placed at the beginning before #include "SAMDTimerInterrupt.h"
-// Don't define SAMDUE_TIMER_INTERRUPT_DEBUG > 0. Only for special ISR debugging only. Can hang the system.
-#define SAMDUE_TIMER_INTERRUPT_DEBUG      1
+// These define's must be placed at the beginning before #include "SAMDUETimerInterrupt.h"
+// _TIMERINTERRUPT_LOGLEVEL_ from 0 to 4
+// Don't define _TIMERINTERRUPT_LOGLEVEL_ > 0. Only for special ISR debugging only. Can hang the system.
+// Don't define TIMER_INTERRUPT_DEBUG > 2. Only for special ISR debugging only. Can hang the system.
+#define TIMER_INTERRUPT_DEBUG         0
+#define _TIMERINTERRUPT_LOGLEVEL_     0
 
 #include "SAMDUETimerInterrupt.h"
 
@@ -75,13 +79,17 @@ unsigned int SWPin = 7;
 volatile bool SWPressed     = false;
 volatile bool SWLongPressed = false;
 
-void TimerHandler(void)
+void TimerHandler()
 {
   static unsigned int debounceCountSWPressed  = 0;
   static unsigned int debounceCountSWReleased = 0;
 
+#if (TIMER_INTERRUPT_DEBUG > 1)
   static unsigned long SWPressedTime;
   static unsigned long SWReleasedTime;
+
+  unsigned long currentMillis = millis();
+#endif
 
   static bool started = false;
 
@@ -101,10 +109,10 @@ void TimerHandler(void)
       // Call and flag SWPressed
       if (!SWPressed)
       {
-        SWPressedTime = millis();
-
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
-        Serial.println("SW Press, from millis() = " + String(SWPressedTime - DEBOUNCING_INTERVAL_MS));
+#if (TIMER_INTERRUPT_DEBUG > 1)   
+        SWPressedTime = currentMillis;
+        
+        Serial.print("SW Press, from millis() = "); Serial.println(SWPressedTime - DEBOUNCING_INTERVAL_MS);
 #endif
 
         SWPressed = true;
@@ -118,10 +126,11 @@ void TimerHandler(void)
         // Call and flag SWLongPressed
         if (!SWLongPressed)
         {
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
-          Serial.println("SW Long Pressed, total time ms = " + String(millis()) + " - " + String(SWPressedTime - DEBOUNCING_INTERVAL_MS)
-                         + " = " + String(millis() - SWPressedTime + DEBOUNCING_INTERVAL_MS) );
-#endif
+#if (TIMER_INTERRUPT_DEBUG > 1)
+          Serial.print("SW Long Pressed, total time ms = "); Serial.print(currentMillis);
+          Serial.print(" - "); Serial.print(SWPressedTime - DEBOUNCING_INTERVAL_MS);
+          Serial.print(" = "); Serial.println(currentMillis - SWPressedTime + DEBOUNCING_INTERVAL_MS);                                           
+#endif          
 
           SWLongPressed = true;
           // Do something for SWLongPressed here in ISR
@@ -136,11 +145,11 @@ void TimerHandler(void)
     // Start debouncing counting debounceCountSWReleased and clear debounceCountSWPressed
     if ( SWPressed && (++debounceCountSWReleased >= DEBOUNCING_INTERVAL_MS / TIMER1_INTERVAL_MS))
     {
-      SWReleasedTime = millis();
+#if (TIMER_INTERRUPT_DEBUG > 1)      
+      SWReleasedTime = currentMillis;
 
       // Call and flag SWPressed
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
-      Serial.println("SW Released, from millis() = " + String(SWReleasedTime));
+      Serial.print("SW Released, from millis() = "); Serial.println(SWReleasedTime);
 #endif
 
       SWPressed     = false;
@@ -151,8 +160,8 @@ void TimerHandler(void)
       //Your_Response_To_Release();
 
       // Call and flag SWPressed
-#if (SAMDUE_TIMER_INTERRUPT_DEBUG > 0)
-      Serial.println("SW Pressed total time ms = " + String(SWReleasedTime - SWPressedTime));
+#if (TIMER_INTERRUPT_DEBUG > 1)
+      Serial.print("SW Pressed total time ms = "); Serial.println(SWReleasedTime - SWPressedTime);
 #endif
 
       debounceCountSWPressed = 0;
@@ -168,10 +177,7 @@ uint16_t attachDueInterrupt(double microseconds, timerCallback callback, const c
 
   uint16_t timerNumber = dueTimerInterrupt.getTimerNumber();
   
-  Serial.print(TimerName);
-  Serial.print(" attached to Timer(");
-  Serial.print(timerNumber);
-  Serial.println(")");
+  Serial.print(TimerName); Serial.print(F(" attached to Timer(")); Serial.print(timerNumber); Serial.println(F(")"));
 
   return timerNumber;
 }
@@ -183,10 +189,10 @@ void setup()
 
   delay(100);
   
-  Serial.println("\nStarting SwitchDebounce on " + String(BOARD_NAME));
+  Serial.print(F("\nStarting SwitchDebounce on ")); Serial.println(BOARD_NAME);
   Serial.println(SAMDUE_TIMER_INTERRUPT_VERSION);
-  Serial.println("CPU Frequency = " + String(F_CPU / 1000000) + " MHz");
-  Serial.println("Timer Frequency = " + String(SystemCoreClock / 1000000) + " MHz");
+  Serial.print(F("CPU Frequency = ")); Serial.print(F_CPU / 1000000); Serial.println(F(" MHz"));
+  Serial.print(F("Timer Frequency = ")); Serial.print(SystemCoreClock / 1000000); Serial.println(F(" MHz"));
 
   // Interval in microsecs
   attachDueInterrupt(TIMER1_INTERVAL_MS * 1000, TimerHandler, "ITimer");

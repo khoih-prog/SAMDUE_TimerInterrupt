@@ -1,30 +1,31 @@
 /****************************************************************************************************************************
-   SAMDUE_ISR_Timer.cpp
-   For SAM DUE boards
-   Written by Khoi Hoang
+  SAMDUE_ISR_Timer.cpp
+  For SAM DUE boards
+  Written by Khoi Hoang
 
-   Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
-   Licensed under MIT license
+  Built by Khoi Hoang https://github.com/khoih-prog/SAMDUE_TimerInterrupt
+  Licensed under MIT license
 
-   Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
-   unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
-   The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
-   Therefore, their executions are not blocked by bad-behaving functions / tasks.
-   This important feature is absolutely necessary for mission-critical tasks.
+  Now even you use all these new 16 ISR-based timers,with their maximum interval practically unlimited (limited only by
+  unsigned long miliseconds), you just consume only one SAM DUE timer and avoid conflicting with other cores' tasks.
+  The accuracy is nearly perfect compared to software timers. The most important feature is they're ISR-based timers
+  Therefore, their executions are not blocked by bad-behaving functions / tasks.
+  This important feature is absolutely necessary for mission-critical tasks.
 
-   Based on SimpleTimer - A timer library for Arduino.
-   Author: mromani@ottotecnica.com
-   Copyright (c) 2010 OTTOTECNICA Italy
+  Based on SimpleTimer - A timer library for Arduino.
+  Author: mromani@ottotecnica.com
+  Copyright (c) 2010 OTTOTECNICA Italy
 
-   Based on BlynkTimer.h
-   Author: Volodymyr Shymanskyy
+  Based on BlynkTimer.h
+  Author: Volodymyr Shymanskyy
 
-   Version: 1.1.1
+  Version: 1.2.0
 
-   Version Modified By   Date      Comments
-   ------- -----------  ---------- -----------
-   1.0.1   K Hoang      06/11/2020 Initial coding
-   1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  Version Modified By   Date      Comments
+  ------- -----------  ---------- -----------
+  1.0.1   K Hoang      06/11/2020 Initial coding
+  1.1.1   K.Hoang      06/12/2020 Add Change_Interval example. Bump up version to sync with other TimerInterrupt Libraries
+  1.2.0   K.Hoang      10/01/2021 Add better debug feature. Optimize code and examples to reduce RAM usage
 *****************************************************************************************************************************/
 
 #include "SAMDUE_ISR_Timer.h"
@@ -39,7 +40,7 @@ void SAMDUE_ISR_Timer::init()
 {
   unsigned long current_millis = millis();   //elapsed();
 
-  for (int i = 0; i < MAX_NUMBER_TIMERS; i++) 
+  for (uint8_t i = 0; i < MAX_NUMBER_TIMERS; i++) 
   {
     memset((void*) &timer[i], 0, sizeof (timer_t));
     timer[i].prev_millis = current_millis;
@@ -50,7 +51,7 @@ void SAMDUE_ISR_Timer::init()
 
 void SAMDUE_ISR_Timer::run() 
 {
-  int i;
+  uint8_t i;
   unsigned long current_millis;
 
   // get current time
@@ -128,7 +129,7 @@ int SAMDUE_ISR_Timer::findFirstFreeSlot()
   }
 
   // return the first slot with no callback (i.e. free)
-  for (int i = 0; i < MAX_NUMBER_TIMERS; i++) 
+  for (uint8_t i = 0; i < MAX_NUMBER_TIMERS; i++) 
   {
     if (timer[i].callback == NULL) 
     {
@@ -297,7 +298,7 @@ void SAMDUE_ISR_Timer::enableAll()
 {
   // Enable all timers with a callback assigned (used)
 
-  for (int i = 0; i < MAX_NUMBER_TIMERS; i++) 
+  for (uint8_t i = 0; i < MAX_NUMBER_TIMERS; i++) 
   {
     if (timer[i].callback != NULL && timer[i].numRuns == TIMER_RUN_FOREVER) 
     {
@@ -310,7 +311,7 @@ void SAMDUE_ISR_Timer::disableAll()
 {
   // Disable all timers with a callback assigned (used)
 
-  for (int i = 0; i < MAX_NUMBER_TIMERS; i++) 
+  for (uint8_t i = 0; i < MAX_NUMBER_TIMERS; i++) 
   {
     if (timer[i].callback != NULL && timer[i].numRuns == TIMER_RUN_FOREVER) 
     {
@@ -334,3 +335,4 @@ unsigned SAMDUE_ISR_Timer::getNumTimers()
 {
   return numTimers;
 }
+
