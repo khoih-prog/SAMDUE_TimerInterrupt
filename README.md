@@ -11,16 +11,13 @@
 
 ## Table of Contents
 
+* [Important Change from v1.3.0](#Important-Change-from-v130)
 * [Why do we need this SAMDUE_TimerInterrupt library](#why-do-we-need-this-samdue_timerinterrupt-library)
   * [Features](#features)
   * [Why using ISR-based Hardware Timer Interrupt is better](#why-using-isr-based-hardware-timer-interrupt-is-better)
   * [Currently supported Boards](#currently-supported-boards)
   * [Important Notes about ISR](#important-notes-about-isr)
-* [Changelog](#changelog)
-  * [Releases v1.2.0](#releases-v120)
-  * [Releases v1.1.1](#releases-v111)
-  * [Releases v1.0.1](#releases-v101)
-  * [Releases v1.0.0](#releases-v100)
+* [Changelog](changelog.md)
 * [Prerequisites](#prerequisites)
 * [Installation](#installation)
   * [Use Arduino Library Manager](#use-arduino-library-manager)
@@ -56,6 +53,7 @@
   * [  8. TimerInterruptLEDDemo](examples/TimerInterruptLEDDemo)
   * [  9. **Change_Interval**](examples/Change_Interval)
   * [ 10. **ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex)
+  * [ 11. **multiFileProject**](examples/multiFileProject) **New**
 * [Example ISR_16_Timers_Array_Complex](#example-isr_16_timers_array_complex)
 * [Debug Terminal Output Samples](#debug-terminal-output-samples)
   * [1. ISR_Timer_Complex_Ethernet on Arduino SAM DUE](#1-isr_timer_complex_ethernet-on-arduino-sam-due)
@@ -65,7 +63,6 @@
   * [5. ISR_16_Timers_Array_Complex on Arduino SAM DUE](#5-isr_16_timers_array_complex-on-arduino-sam-due)
 * [Debug](#debug)
 * [Troubleshooting](#troubleshooting)
-* [Releases](#releases)
 * [Issues](#issues)
 * [TO DO](#to-do)
 * [DONE](#done)
@@ -76,6 +73,10 @@
 
 ---
 ---
+
+### Important Change from v1.3.0
+
+Please have a look at [HOWTO Fix `Multiple Definitions` Linker Error](#howto-fix-multiple-definitions-linker-error)
 
 ### Why do we need this [SAMDUE_TimerInterrupt library](https://github.com/khoih-prog/SAMDUE_TimerInterrupt)
 
@@ -133,43 +134,20 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
 ---
 ---
 
-## Changelog
-
-### Releases v1.2.0
-
-1. Add better debug feature.
-2. Optimize code and examples to reduce RAM usage
-3. Add Table of Contents
-
-### Releases v1.1.1
-
-1. Add example [**Change_Interval**](examples/Change_Interval) and [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex)
-2. Bump up version to sync with other TimerInterrupt Libraries. Modify Version String.
-
-### Releases v1.0.1
-
-1. Permit up to 16 super-long-time, super-accurate ISR-based timers to avoid being blocked
-2. Using cpp code besides Impl.h code to use if Multiple-Definition linker error3. 
-3. Add complicated example [ISR_16_Timers_Array](examples/ISR_16_Timers_Array) utilizing and demonstrating the full usage of 16 independent ISR Timers based on just 1 Hardware Timer.
-
-
----
----
-
 ## Prerequisites
 
- 1. [`Arduino IDE 1.8.13+` for Arduino](https://www.arduino.cc/en/Main/Software)
- 2. [`Arduino SAM DUE core v1.6.12+`](https://www.arduino.cc/en/Guide/ArduinoDue) for SAM DUE ARM Cortex-M3 boards
- 3. [`Blynk library 0.6.1+`](https://github.com/blynkkk/blynk-library/releases). [![Latest release](https://img.shields.io/github/release/blynkkk/blynk-library.svg)](https://github.com/blynkkk/blynk-library/releases/latest/) to use with certain example.
+ 1. [`Arduino IDE 1.8.19+` for Arduino](https://github.com/arduino/Arduino). [![GitHub release](https://img.shields.io/github/release/arduino/Arduino.svg)](https://github.com/arduino/Arduino/releases/latest)
+ 2. [`Arduino SAM DUE core v1.6.12+`](https://github.com/arduino/ArduinoCore-sam) for SAM DUE ARM Cortex-M3 boards
+ 3. [`Blynk library 1.0.1+`](https://github.com/blynkkk/blynk-library/releases). [![Latest release](https://img.shields.io/github/release/blynkkk/blynk-library.svg)](https://github.com/blynkkk/blynk-library/releases/latest/) to use with certain example.
  4. To use with certain example, depending on which Ethernet card you're using:
    - [`Ethernet library v2.0.0+`](https://github.com/arduino-libraries/Ethernet) for W5100, W5200 and W5500.  [![GitHub release](https://img.shields.io/github/release/arduino-libraries/Ethernet.svg)](https://github.com/arduino-libraries/Ethernet/releases/latest)
    - [`EthernetLarge library v2.0.0+`](https://github.com/OPEnSLab-OSU/EthernetLarge) for W5100, W5200 and W5500.
    - [`Ethernet2 library v1.0.4+`](https://github.com/khoih-prog/Ethernet2) for W5500. [![GitHub release](https://img.shields.io/github/release/adafruit/Ethernet2.svg)](https://github.com/adafruit/Ethernet2/releases/latest)
    - [`Ethernet3 library v1.5.5+`](https://github.com/sstaub/Ethernet3) for W5500/WIZ550io/WIZ850io/USR-ES1 with Wiznet W5500 chip. [![GitHub release](https://img.shields.io/github/release/sstaub/Ethernet3.svg)](https://github.com/sstaub/Ethernet3/releases/latest)
-   - [`EthernetENC library v2.0.0+`](https://github.com/jandrassy/EthernetENC) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/jandrassy/EthernetENC.svg)](https://github.com/jandrassy/EthernetENC/releases/latest). **New and Better**
-   - [`UIPEthernet library v2.0.9+`](https://github.com/UIPEthernet/UIPEthernet) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/UIPEthernet/UIPEthernet.svg)](https://github.com/UIPEthernet/UIPEthernet/releases/latest)
+   - [`EthernetENC library v2.0.2+`](https://github.com/jandrassy/EthernetENC) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/jandrassy/EthernetENC.svg)](https://github.com/jandrassy/EthernetENC/releases/latest). **New and Better**
+   - [`UIPEthernet library v2.0.11+`](https://github.com/UIPEthernet/UIPEthernet) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/UIPEthernet/UIPEthernet.svg)](https://github.com/UIPEthernet/UIPEthernet/releases/latest)
  5. To use with certain example
-   - [`SimpleTimer library`](https://github.com/schinken/SimpleTimer) for [ISR_16_Timers_Array example](examples/ISR_16_Timers_Array).
+   - [`SimpleTimer library`](https://github.com/jfturcot/SimpleTimer) for [ISR_Timers_Array_Simple](examples/ISR_Timers_Array_Simple) and [ISR_16_Timers_Array_Complex](examples/ISR_16_Timers_Array_Complex) examples.
    
 ---
 ---
@@ -276,29 +254,36 @@ To add UDP Multicast support, necessary for the [**UPnP_Generic library**](https
 
 To fix [`ESP32 compile error`](https://github.com/espressif/arduino-esp32), just copy the following file into the [`ESP32`](https://github.com/espressif/arduino-esp32) cores/esp32 directory (e.g. ./arduino-1.8.12/hardware/espressif/cores/esp32) to overwrite the old file:
 - [Server.h](LibraryPatches/esp32/cores/esp32/Server.h)
+
+
 ---
 ---
 
 ### HOWTO Fix `Multiple Definitions` Linker Error
 
-The current library implementation, using **xyz-Impl.h instead of standard xyz.cpp**, possibly creates certain `Multiple Definitions` Linker error in certain use cases. Although it's simple to just modify several lines of code, either in the library or in the application, the library is adding 2 more source directories
+The current library implementation, using `xyz-Impl.h` instead of standard `xyz.cpp`, possibly creates certain `Multiple Definitions` Linker error in certain use cases.
 
-1. **scr_h** for new h-only files
-2. **src_cpp** for standard h/cpp files
+You can include these `.hpp` files
 
-besides the standard **src** directory.
+```
+// Can be included as many times as necessary, without `Multiple Definitions` Linker Error
+#include "SAMDUETimerInterrupt.hpp"   //https://github.com/khoih-prog/SAMDUE_TimerInterrupt
 
-To use the **old standard cpp** way, locate this library' directory, then just 
+// Can be included as many times as necessary, without `Multiple Definitions` Linker Error
+#include "SAMDUE_ISR_Timer.hpp"        //https://github.com/khoih-prog/SAMDUE_TimerInterrupt
+```
 
-1. **Delete the all the files in src directory.**
-2. **Copy all the files in src_cpp directory into src.**
-3. Close then reopen the application code in Arduino IDE, etc. to recompile from scratch.
+in many files. But be sure to use the following `.h` files **in just 1 `.h`, `.cpp` or `.ino` file**, which must **not be included in any other file**, to avoid `Multiple Definitions` Linker Error
 
-To re-use the **new h-only** way, just 
+```
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
+#include "SAMDUETimerInterrupt.h"     //https://github.com/khoih-prog/SAMDUE_TimerInterrupt
 
-1. **Delete the all the files in src directory.**
-2. **Copy the files in src_h directory into src.**
-3. Close then reopen the application code in Arduino IDE, etc. to recompile from scratch.
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
+#include "SAMDUE_ISR_Timer.h"          //https://github.com/khoih-prog/SAMDUE_TimerInterrupt
+```
+
+Check the new [**multiFileProject** example](examples/multiFileProject) for a `HOWTO` demo.
 
 ---
 ---
@@ -460,7 +445,8 @@ void setup()
  7. [TimerInterruptTest](examples/TimerInterruptTest)
  8. [TimerInterruptLEDDemo](examples/TimerInterruptLEDDemo)
  9. [**Change_Interval**](examples/Change_Interval). New
-10. [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex). New
+10. [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex).
+11. [**multiFileProject**](examples/multiFileProject) **New**
 
 ---
 ---
@@ -477,12 +463,15 @@ void setup()
 // Don't define _TIMERINTERRUPT_LOGLEVEL_ > 0. Only for special ISR debugging only. Can hang the system.
 // Don't define TIMER_INTERRUPT_DEBUG > 2. Only for special ISR debugging only. Can hang the system.
 #define TIMER_INTERRUPT_DEBUG         0
-#define _TIMERINTERRUPT_LOGLEVEL_     0
+#define _TIMERINTERRUPT_LOGLEVEL_     3
 
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 #include "SAMDUETimerInterrupt.h"
+
+// To be included only in main(), .ino with setup() to avoid `Multiple Definitions` Linker Error
 #include "SAMDUE_ISR_Timer.h"
 
-#include <SimpleTimer.h>              // https://github.com/schinken/SimpleTimer
+#include <SimpleTimer.h>              // https://github.com/jfturcot/SimpleTimer
 
 #ifndef LED_BUILTIN
   #define LED_BUILTIN       13
@@ -812,7 +801,7 @@ While software timer, **programmed for 2s, is activated after 10.917s !!!**. The
 
 ```
 Starting ISR_Timer_Complex_Ethernet on SAM DUE
-SAMDUE_TimerInterrupt v1.2.0
+SAMDUE_TimerInterrupt v1.3.0
 CPU Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
 Timer(0), us = 50000.00
@@ -903,7 +892,7 @@ The following is the sample terminal output when running example [**TimerInterru
 
 ```
 Starting TimerInterruptTest on SAM DUE
-SAMDUE_TimerInterrupt v1.2.0
+SAMDUE_TimerInterrupt v1.3.0
 CPU Frequency = 84 MHz
 Timer Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
@@ -966,7 +955,7 @@ The following is the sample terminal output when running example [**ISR_16_Timer
 
 ```
 Starting ISR_16_Timers_Array on SAM DUE
-SAMDUE_TimerInterrupt v1.2.0
+SAMDUE_TimerInterrupt v1.3.0
 CPU Frequency = 84 MHz
 Timer Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
@@ -1034,7 +1023,7 @@ The following is the sample terminal output when running example [Change_Interva
 
 ```
 Starting Change_Interval on SAM DUE
-SAMDUE_TimerInterrupt v1.2.0
+SAMDUE_TimerInterrupt v1.3.0
 CPU Frequency = 84 MHz
 Timer Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
@@ -1076,7 +1065,7 @@ In this example, 16 independent ISR Timers are used, yet utilized just one Hardw
 
 ```
 Starting ISR_16_Timers_Array_Complex on SAM DUE
-SAMDUE_TimerInterrupt v1.1.1
+SAMDUE_TimerInterrupt v1.3.0
 CPU Frequency = 84 MHz
 Timer Frequency = 84 MHz
 Using Timer(0) = TC0, channel = 0, IRQ = TC0_IRQn
@@ -1212,32 +1201,6 @@ If you get compilation errors, more often than not, you may need to install a ne
 
 Sometimes, the library will only work if you update the board core to the latest version because I am using newly added functions.
 
----
----
-
-## Releases
-
-### Releases v1.2.0
-
-1. Add better debug feature.
-2. Optimize code and examples to reduce RAM usage
-3. Add Table of Contents
-
-### Releases v1.1.1
-
-1. Add example [**Change_Interval**](examples/Change_Interval) and [**ISR_16_Timers_Array_Complex**](examples/ISR_16_Timers_Array_Complex)
-2. Bump up version to sync with other TimerInterrupt Libraries. Modify Version String.
-
-
-### Releases v1.0.1
-
-1. Permit up to 16 super-long-time, super-accurate ISR-based timers to avoid being blocked
-2. Using cpp code besides Impl.h code to use if Multiple-Definition linker error3. 
-3. Add complicated example [ISR_16_Timers_Array](examples/ISR_16_Timers_Array) utilizing and demonstrating the full usage of 16 independent ISR Timers based on just 1 Hardware Timer.
-
-#### Supported Boards
-
-  - **Arduino SAM DUE**.
 
 ---
 ---
@@ -1261,6 +1224,8 @@ Submit issues to: [SAMDUE_TimerInterrupt issues](https://github.com/khoih-prog/S
 3. Longer time interval
 4. Similar features for remaining Arduino boards such as ESP32, ESP8266, STM32, nRF52, mbed-nRF52, Teensy, etc.
 5. Add Table of Contents
+6. Fix `multiple-definitions` linker error
+7. Optimize library code by using `reference-passing` instead of `value-passing`
 
 ---
 ---
