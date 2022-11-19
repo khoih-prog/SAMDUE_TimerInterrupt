@@ -2,7 +2,7 @@
 
 [![arduino-library-badge](https://www.ardu-badge.com/badge/SAMDUE_TimerInterrupt.svg?)](https://www.ardu-badge.com/SAMDUE_TimerInterrupt)
 [![GitHub release](https://img.shields.io/github/release/khoih-prog/SAMDUE_TimerInterrupt.svg)](https://github.com/khoih-prog/SAMDUE_TimerInterrupt/releases)
-[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/khoih-prog/SAMDUE_TimerInterrupt/blob/master/LICENSE)
+[![GitHub](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/khoih-prog/SAMDUE_TimerInterrupt/blob/main/LICENSE)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](#Contributing)
 [![GitHub issues](https://img.shields.io/github/issues/khoih-prog/SAMDUE_TimerInterrupt.svg)](http://github.com/khoih-prog/SAMDUE_TimerInterrupt/issues)
 
@@ -146,12 +146,9 @@ The catch is **your function is now part of an ISR (Interrupt Service Routine), 
  2. [`Arduino SAM DUE core v1.6.12+`](https://github.com/arduino/ArduinoCore-sam) for SAM DUE ARM Cortex-M3 boards
  3. [`Blynk library 1.0.1+`](https://github.com/blynkkk/blynk-library/releases). [![Latest release](https://img.shields.io/github/release/blynkkk/blynk-library.svg)](https://github.com/blynkkk/blynk-library/releases/latest/) to use with certain example.
  4. To use with certain example, depending on which Ethernet card you're using:
-   - [`Ethernet library v2.0.0+`](https://github.com/arduino-libraries/Ethernet) for W5100, W5200 and W5500.  [![GitHub release](https://img.shields.io/github/release/arduino-libraries/Ethernet.svg)](https://github.com/arduino-libraries/Ethernet/releases/latest)
-   - [`EthernetLarge library v2.0.0+`](https://github.com/OPEnSLab-OSU/EthernetLarge) for W5100, W5200 and W5500.
-   - [`Ethernet2 library v1.0.4+`](https://github.com/khoih-prog/Ethernet2) for W5500. [![GitHub release](https://img.shields.io/github/release/adafruit/Ethernet2.svg)](https://github.com/adafruit/Ethernet2/releases/latest)
-   - [`Ethernet3 library v1.5.5+`](https://github.com/sstaub/Ethernet3) for W5500/WIZ550io/WIZ850io/USR-ES1 with Wiznet W5500 chip. [![GitHub release](https://img.shields.io/github/release/sstaub/Ethernet3.svg)](https://github.com/sstaub/Ethernet3/releases/latest)
-   - [`EthernetENC library v2.0.2+`](https://github.com/jandrassy/EthernetENC) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/jandrassy/EthernetENC.svg)](https://github.com/jandrassy/EthernetENC/releases/latest). **New and Better**
-   - [`UIPEthernet library v2.0.11+`](https://github.com/UIPEthernet/UIPEthernet) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/UIPEthernet/UIPEthernet.svg)](https://github.com/UIPEthernet/UIPEthernet/releases/latest)
+   - [`Ethernet_Generic library v2.7.1+`](https://github.com/khoih-prog/Ethernet_Generic) for W5100, W5200 and W5500.  [![GitHub release](https://img.shields.io/github/release/khoih-prog/Ethernet_Generic.svg)](https://github.com/khoih-prog/Ethernet_Generic/releases/latest)
+   - [`EthernetENC library v2.0.3+`](https://github.com/jandrassy/EthernetENC) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/jandrassy/EthernetENC.svg)](https://github.com/jandrassy/EthernetENC/releases/latest). **New and Better**
+   - [`UIPEthernet library v2.0.12+`](https://github.com/UIPEthernet/UIPEthernet) for ENC28J60. [![GitHub release](https://img.shields.io/github/release/UIPEthernet/UIPEthernet.svg)](https://github.com/UIPEthernet/UIPEthernet/releases/latest)
  5. To use with certain example
    - [`SimpleTimer library`](https://github.com/jfturcot/SimpleTimer) for [ISR_16_Timers_Array](examples/ISR_16_Timers_Array) and [ISR_16_Timers_Array_Complex](examples/ISR_16_Timers_Array_Complex) examples.
    
@@ -170,9 +167,9 @@ You can also use this link [![arduino-library-badge](https://www.ardu-badge.com/
 Another way to install is to:
 
 1. Navigate to [**SAMDUE_TimerInterrupt**](https://github.com/khoih-prog/SAMDUE_TimerInterrupt) page.
-2. Download the latest release `SAMDUE_TimerInterrupt-master.zip`.
-3. Extract the zip file to `SAMDUE_TimerInterrupt-master` directory 
-4. Copy whole `SAMDUE_TimerInterrupt-master` folder to Arduino libraries' directory such as `~/Arduino/libraries/`.
+2. Download the latest release `SAMDUE_TimerInterrupt-main.zip`.
+3. Extract the zip file to `SAMDUE_TimerInterrupt-main` directory 
+4. Copy whole `SAMDUE_TimerInterrupt-main` folder to Arduino libraries' directory such as `~/Arduino/libraries/`.
 
 ### VS Code & PlatformIO
 
@@ -930,7 +927,7 @@ If you want to contribute to this project:
 
 ### License
 
-- The library is licensed under [MIT](https://github.com/khoih-prog/SAMDUE_TimerInterrupt/blob/master/LICENSE)
+- The library is licensed under [MIT](https://github.com/khoih-prog/SAMDUE_TimerInterrupt/blob/main/LICENSE)
 
 ---
 
