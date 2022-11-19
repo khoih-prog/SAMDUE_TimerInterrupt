@@ -61,31 +61,31 @@ const DueTimerIRQInfo DueTimerInterrupt::Timers[NUM_TIMERS] =
 
 // Fix for compatibility with Servo library
 #if USING_SERVO_LIB
-  // Set _callbacks as used, allowing DueTimerInterrupt::getAvailable() to work
-  void (*DueTimerInterrupt::_callbacks[NUM_TIMERS])() =
-  {
-    (void (*)()) 1, // Timer 0 - Occupied
-    (void (*)()) 0, // Timer 1
-    (void (*)()) 1, // Timer 2 - Occupied
-    (void (*)()) 1, // Timer 3 - Occupied
-    (void (*)()) 1, // Timer 4 - Occupied
-    (void (*)()) 1, // Timer 5 - Occupied
-  
-  #if defined(TC2)
-    (void (*)()) 0, // Timer 6
-    (void (*)()) 0, // Timer 7
-    (void (*)()) 0  // Timer 8
-  #endif
-  };
+// Set _callbacks as used, allowing DueTimerInterrupt::getAvailable() to work
+void (*DueTimerInterrupt::_callbacks[NUM_TIMERS])() =
+{
+  (void (*)()) 1, // Timer 0 - Occupied
+  (void (*)()) 0, // Timer 1
+  (void (*)()) 1, // Timer 2 - Occupied
+  (void (*)()) 1, // Timer 3 - Occupied
+  (void (*)()) 1, // Timer 4 - Occupied
+  (void (*)()) 1, // Timer 5 - Occupied
+
+#if defined(TC2)
+  (void (*)()) 0, // Timer 6
+  (void (*)()) 0, // Timer 7
+  (void (*)()) 0  // Timer 8
+#endif
+};
 
 #else
-  void (*DueTimerInterrupt::_callbacks[NUM_TIMERS])() = {};
+void (*DueTimerInterrupt::_callbacks[NUM_TIMERS])() = {};
 #endif
 
 #if defined(TC2)
-  double DueTimerInterrupt::_frequency[NUM_TIMERS] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
+double DueTimerInterrupt::_frequency[NUM_TIMERS] = { -1, -1, -1, -1, -1, -1, -1, -1, -1};
 #else
-  double DueTimerInterrupt::_frequency[NUM_TIMERS] = { -1, -1, -1, -1, -1, -1};
+double DueTimerInterrupt::_frequency[NUM_TIMERS] = { -1, -1, -1, -1, -1, -1};
 #endif
 
 ///////////////////////////////////////////////////////////////////////
